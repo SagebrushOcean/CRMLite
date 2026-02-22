@@ -1,2 +1,8 @@
 .venv/
 .idea/
+/shelf/
+/workspace.xml
+
+**cache**
+
+*.sqlite3
