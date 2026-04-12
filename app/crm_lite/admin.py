@@ -27,3 +27,12 @@ class SupplyAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     list_display = ['title', 'quantity', 'storage_id', 'created_at','updated_at','purchase_price','sale_price']
 
+class ProductSaleInline(admin.TabularInline):
+    model = models.ProductSale
+    extra = 0
+
+@admin.register(models.Sale)
+class SaleAdmin(admin.ModelAdmin):
+    list_display = ['id', 'buyer_name', 'company_id', 'sale_date']
+    inlines = [ProductSaleInline]
+

@@ -82,6 +82,27 @@ class Supply(models.Model):
     def __str__(self):
         return f'Поставка {self.id}'
 
+class Sale(models.Model):
+    buyer_name = models.CharField(
+        verbose_name='Покупатель',
+        max_length=50,
+    )
+    company_id = models.ForeignKey(Company,
+        on_delete=models.CASCADE,
+        related_name='sales',
+        verbose_name='Компания',
+    )
+    sale_date = models.DateTimeField(
+        default=timezone.now,
+        verbose_name='Дата продажи',
+    )
+
+    class Meta:
+        verbose_name = 'Продажа'
+        verbose_name_plural = 'Продажи'
+
+    def __str__(self):
+        return f'Продажа {self.id}'
 
 class Product(models.Model):
     storage_id = models.ForeignKey(Storage,
@@ -123,6 +144,7 @@ class Product(models.Model):
         auto_now=True
     )
     supplies = models.ManyToManyField(Supply, through='SupplyProduct',related_name='products')
+    sales = models.ManyToManyField(Sale, through='ProductSale', related_name='products')
 
     class Meta:
         verbose_name = 'Товар'
@@ -158,3 +180,29 @@ class SupplyProduct(models.Model):
 
     def __str__(self):
         return f'{self.product_id.title} (поставка {self.supply_id.id})'
+
+class ProductSale(models.Model):
+    sale_id = models.ForeignKey(Sale,
+        on_delete=models.CASCADE,
+        verbose_name='ID продажи',
+        related_name = 'product_sales'
+    )
+    product_id = models.ForeignKey(Product,
+        on_delete=models.CASCADE,
+        verbose_name='Товар',
+    )
+    quantity = models.PositiveIntegerField(
+        verbose_name='Количество товара',
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['sale_id', 'product_id'], name='unique_product_sale'
+            )
+        ]
+        verbose_name = 'Товар из продажи'
+        verbose_name_plural = 'Товары из продажи'
+
+    def __str__(self):
+        return f'{self.product_id.title} (продажа {self.sale_id.id})'

@@ -1,10 +1,11 @@
+from django.utils import timezone
 from rest_framework import serializers
-from .models import Company, Storage, Supplier, Supply, Product, SupplyProduct
+from .models import Company, Storage, Supplier, Supply, Product, SupplyProduct, Sale
 
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
-        fields = "__all__"
+        fields = '__all__'
 
 class StorageSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
@@ -61,5 +62,35 @@ class ProductSerializer(ProductUpdateSerializer):
     class Meta(ProductUpdateSerializer.Meta):
         fields = ['id'] + ProductUpdateSerializer.Meta.fields + ['quantity','storage_id', 'created_at','updated_at']
 
+class SaleSerializer(serializers.ModelSerializer):
+    product_sales = CreateSupplyProductSerializer(many=True, write_only=True)
 
+    class Meta:
+        model = Sale
+        read_only_fields = ['id', 'sale_date']
+        fields = ['id','buyer_name','product_sales','sale_date']
 
+class UpdateSaleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Sale
+        fields = ['id','buyer_name','sale_date']
+
+    def validate_sale_date(self, value):
+        if value > timezone.now():
+            raise serializers.ValidationError('Дата продажи не должна превышать текущую')
+        return value
+
+class HealthCheckSerializer(serializers.Serializer):
+    DATABASE = 0
+    API_INTEGRATION = 1
+
+    COMPONENT_CHOICES = [
+        (DATABASE, "Database"),
+        (API_INTEGRATION, "API Integration")
+    ]
+    choices = serializers.SerializerMethodField()
+    component = serializers.ChoiceField(choices=COMPONENT_CHOICES)
+
+    def get_choices(self, obj):
+        return [choice[0] for choice in self.COMPONENT_CHOICES]
